@@ -1,6 +1,6 @@
 const { OAuth2Client } = require("google-auth-library");
 const pool = require("../db/database");
-
+const jwt = require("jsonwebtoken");
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 async function authenticateWithGoogle(credential) {
@@ -31,7 +31,18 @@ async function authenticateWithGoogle(credential) {
         [googleId, email, username, profilePicture]
     );
 
-    return result.rows[0];
+    const user = result.rows[0];
+
+    const token = jwt.sign(
+        { id: user.id },
+        process.env.JWT_SECRET,
+        { expiresIn: "1d" }
+    );
+
+    return {
+        token,
+        user
+    };
 }
 
 module.exports = {

@@ -4,6 +4,13 @@ async function simulateDay(req, res) {
 
     try {
         const gameSessionId = Number(req.params.id);
+        const userId=Number(req.user.id);
+
+        if (!Number.isInteger(userId) || userId <= 0) {
+            return res.status(400).json({
+                message: "Invalid user id"
+            });
+        }
 
         if (!Number.isInteger(gameSessionId) || gameSessionId <= 0) {
             return res.status(400).json({
@@ -12,7 +19,7 @@ async function simulateDay(req, res) {
         }
 
         const result =
-            await simulationService.simulateDay(gameSessionId);
+            await simulationService.simulateDay(gameSessionId,userId);
 
         return res.status(200).json({
             message: "Day simulated successfully",

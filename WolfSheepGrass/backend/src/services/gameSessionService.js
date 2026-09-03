@@ -34,7 +34,7 @@ async function createGameSession({
     return result.rows[0];
 }
 
-async function getGameSessionById(id) {
+async function getGameSessionById(id,userId) {
     const result = await pool.query(
         `
         SELECT
@@ -50,37 +50,13 @@ async function getGameSessionById(id) {
             created_at,
             updated_at
         FROM game_sessions
-        WHERE id = $1
+        WHERE id = $1 AND user_id = $2
         `,
-        [id]
+        [id,userId]
     );
 
-    return result.rows[0];
+    return result.rows[0] || null;
 }
-
-// async function getGameSessionById(id) {
-//     const result = await pool.query(
-//         `
-//         SELECT
-//             id,
-//             user_id,
-//             status,
-//             board_rows,
-//             board_columns,
-//             current_day,
-//             max_days,
-//             started_at,
-//             completed_at,
-//             created_at,
-//             updated_at
-//         FROM game_sessions
-//         WHERE id = $1
-//         `,
-//         [id]
-//     );
-
-//     return result.rows[0];
-// }
 
 async function getGameSessionsByUserId(userId) {
     const result = await pool.query(
@@ -107,7 +83,7 @@ async function getGameSessionsByUserId(userId) {
     return result.rows;
 }
 
-async function updateGameSession(id, {
+async function updateGameSession(id, userId,{
     currentDay,
     status,
     completedAt
@@ -120,7 +96,7 @@ async function updateGameSession(id, {
             status = $2,
             completed_at = $3,
             updated_at = CURRENT_TIMESTAMP
-        WHERE id = $4
+        WHERE id = $4 AND user_id = $5
         RETURNING
             id,
             user_id,
@@ -134,13 +110,13 @@ async function updateGameSession(id, {
             created_at,
             updated_at
         `,
-        [currentDay, status, completedAt, id]
+        [currentDay, status, completedAt, id, userId]
     );
 
     return result.rows[0];
 }
 
-async function startGameSession(id) {
+async function startGameSession(id,userId) {
     const result = await pool.query(
         `
         UPDATE game_sessions
@@ -149,7 +125,7 @@ async function startGameSession(id) {
             current_day = 0,
             started_at = CURRENT_TIMESTAMP,
             updated_at = CURRENT_TIMESTAMP
-        WHERE id = $1
+        WHERE id = $1 AND user_id = $2
         RETURNING
             id,
             user_id,
@@ -163,10 +139,10 @@ async function startGameSession(id) {
             created_at,
             updated_at
         `,
-        [id]
+        [id,userId]
     );
 
-    return result.rows[0];
+    return result.rows[0] || null;
 }
 
 module.exports = {

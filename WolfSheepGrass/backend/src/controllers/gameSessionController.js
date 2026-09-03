@@ -7,12 +7,11 @@ function isPositiveInteger(value) {
 async function createGameSession(req, res) {
     try {
         const {
-            userId,
             boardRows = 5,
             boardColumns = 5,
             maxDays = 10
         } = req.body;
-
+        const userId=Number(req.user.id);
         if (!isPositiveInteger(userId)) {
             return res.status(400).json({
                 message: "userId must be a positive integer"
@@ -53,41 +52,16 @@ async function createGameSession(req, res) {
     }
 }
 
-// async function getGameSessionById(req, res) {
-//     try {
-//         const id = Number(req.params.id);
-
-//         if (!Number.isInteger(id) || id <= 0) {
-//             return res.status(400).json({
-//                 message: "Invalid game session id"
-//             });
-//         }
-
-//         const gameSession =
-//             await gameSessionService.getGameSessionById(id);
-
-//         if (!gameSession) {
-//             return res.status(404).json({
-//                 message: "Game session not found"
-//             });
-//         }
-
-//         return res.status(200).json({
-//             gameSession
-//         });
-
-//     } catch (error) {
-//         console.error("Get game session error:", error);
-
-//         return res.status(500).json({
-//             message: "Could not get game session"
-//         });
-//     }
-// }
-
 async function getGameSessionById(req, res) {
     try {
         const id = Number(req.params.id);
+        const userId=Number(req.user.id);
+
+        if (!Number.isInteger(userId) || userId <= 0) {
+            return res.status(401).json({
+            message: "Invalid authenticated user"
+            });
+        }
 
         if (!Number.isInteger(id) || id <= 0) {
             return res.status(400).json({
@@ -96,7 +70,7 @@ async function getGameSessionById(req, res) {
         }
 
         const gameSession =
-            await gameSessionService.getGameSessionById(id);
+            await gameSessionService.getGameSessionById(id,userId);
 
         if (!gameSession) {
             return res.status(404).json({
@@ -119,7 +93,7 @@ async function getGameSessionById(req, res) {
 
 async function getGameSessionsByUserId(req, res) {
     try {
-        const userId = Number(req.query.userId);
+        const userId = Number(req.user.id);
 
         if (!Number.isInteger(userId) || userId <= 0) {
             return res.status(400).json({
@@ -146,6 +120,7 @@ async function getGameSessionsByUserId(req, res) {
 async function updateGameSession(req, res) {
     try {
         const id = Number(req.params.id);
+        const userId=Number(req.user.id);
 
         if (!Number.isInteger(id) || id <= 0) {
             return res.status(400).json({
@@ -179,7 +154,7 @@ async function updateGameSession(req, res) {
         }
 
         const gameSession =
-            await gameSessionService.updateGameSession(id, {
+            await gameSessionService.updateGameSession(id,userId, {
                 currentDay,
                 status,
                 completedAt
@@ -214,6 +189,13 @@ async function updateGameSession(req, res) {
 async function startGameSession(req, res) {
     try {
         const id = Number(req.params.id);
+        const userId=Number(req.user.id);
+
+        if(!Number.isInteger(userId) || userId<=0){
+            return res.status(400).json({
+                message:"Invalid user id"
+            })
+        }
 
         if (!Number.isInteger(id) || id <= 0) {
             return res.status(400).json({
@@ -222,7 +204,7 @@ async function startGameSession(req, res) {
         }
 
         const gameSession =
-            await gameSessionService.startGameSession(id);
+            await gameSessionService.startGameSession(id,userId);
 
         if (!gameSession) {
             return res.status(404).json({
@@ -243,6 +225,7 @@ async function startGameSession(req, res) {
         });
     }
 }
+
 module.exports = {
     createGameSession,
     getGameSessionById,
