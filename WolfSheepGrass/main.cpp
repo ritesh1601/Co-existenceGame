@@ -1,8 +1,12 @@
 #include <iostream>
+#include <fstream>
+
 #include "GameState.h"
 #include "SimulationEngine.h"
+#include "json/json.hpp"
 
 using namespace std;
+using json = nlohmann::json;
 
 void printBoard(const GameState& gameState) {
 
@@ -41,105 +45,135 @@ void printBoard(const GameState& gameState) {
     cout << "\n";
 }
 
-int main() {
+json gameStateToJson(const GameState& gameState) {
 
-    // Create 5 x 5 board
-    GameState gameState(4, 5);
+    json data;
 
-    // Game should survive for 10 days
-    gameState.setMaxDays(10);
+    const Board& board = gameState.getBoard();
 
-    // -------------------------
-    // Add Grass
-    // -------------------------
+    data["boardRows"] = board.getRows();
+    data["boardColumns"] = board.getColumns();
+    data["currentDay"] = gameState.getCurrentDay();
+    data["maxDays"] = gameState.getMaxDays();
 
-    Grass* grass1 = new Grass(
-        1,
-        Position(0, 0)
-    );
+    data["entities"] = json::array();
 
-    Grass* grass2 = new Grass(
-        2,
-        Position(2, 2)
-    );
+    // Grass
+    for (const Grass* grass : gameState.getGrass()) {
 
-    Grass* grass3 = new Grass(
-        3,
-        Position(4, 4)
-    );
+        json entity;
 
-    gameState.addGrass(grass1);
-    gameState.addGrass(grass2);
-    gameState.addGrass(grass3);
+        entity["id"] = grass->getId();
+        entity["type"] = "grass";
+        entity["row"] = grass->getPosition().row;
+        entity["column"] = grass->getPosition().col;
 
-
-    // -------------------------
-    // Add Sheep
-    // -------------------------
-
-    Sheep* sheep1 = new Sheep(
-        gameState.getNextSheepId(),
-        Position(1, 1)
-    );
-
-    Sheep* sheep2 = new Sheep(
-        gameState.getNextSheepId(),
-        Position(3, 3)
-    );
-
-    gameState.addSheep(sheep1);
-    gameState.addSheep(sheep2);
-
-
-    // -------------------------
-    // Add Wolves
-    // -------------------------
-
-    Wolf* wolf1 = new Wolf(
-        1,
-        Position(0, 4)
-    );
-
-    Wolf* wolf2 = new Wolf(
-        2,
-        Position(4, 0)
-    );
-
-    gameState.addWolf(wolf1);
-    gameState.addWolf(wolf2);
-
-
-    // -------------------------
-    // Simulation
-    // -------------------------
-
-    SimulationEngine engine;
-
-    printBoard(gameState);
-
-    while (gameState.getStatus() == GameStatus::RUNNING) {
-
-        engine.tick(gameState);
-
-        printBoard(gameState);
-
-        cout << "Status: ";
-
-        if (gameState.getStatus() == GameStatus::RUNNING)
-            cout << "RUNNING";
-
-        else if (gameState.getStatus() == GameStatus::WON)
-            cout << "WON";
-
-        else
-            cout << "LOST";
-
-        cout << "\n";
-
-        cout << "-------------------------\n";
+        data["entities"].push_back(entity);
     }
 
-    cout << "\nGame Finished!\n";
+    // Sheep
+    for (const Sheep* sheep : gameState.getSheep()) {
+
+        json entity;
+
+        entity["id"] = sheep->getId();
+        entity["type"] = "sheep";
+        entity["row"] = sheep->getPosition().row;
+        entity["column"] = sheep->getPosition().col;
+        entity["daysWithoutFood"] = sheep->getDaysWithoutFood();
+
+        data["entities"].push_back(entity);
+    }
+
+    // Wolves
+    for (const Wolf* wolf : gameState.getWolves()) {
+
+        json entity;
+
+        entity["id"] = wolf->getId();
+        entity["type"] = "wolf";
+        entity["row"] = wolf->getPosition().row;
+        entity["column"] = wolf->getPosition().col;
+        entity["daysWithoutFood"] = wolf->getDaysWithoutFood();
+
+        data["entities"].push_back(entity);
+    }
+
+    return data;
+}
+
+int main() {
+
+    // Read JSON from stdin
+    json data;
+
+    try {
+        cin >> data;
+    }
+    catch (...) {
+        cerr << "Invalid JSON input\n";
+        return 1;
+    }
+
+    // Read game settings
+    int rows = data["boardRows"];
+    int columns = data["boardColumns"];
+    int currentDay = data["currentDay"];
+    int maxDays = data["maxDays"];
+
+    // Create game state
+    GameState gameState(rows, columns);
+
+    gameState.setCurrentDay(currentDay);
+    gameState.setMaxDays(maxDays);
+
+    // Create entities
+    for (const auto& entity : data["entities"]) {
+
+        int id = entity["id"];
+        string type = entity["type"];
+
+        int row = entity["row"];
+        int column = entity["column"];
+
+        Position position(row, column);
+
+        if (type == "grass") {
+
+            Grass* grass = new Grass(id, position);
+            gameState.addGrass(grass);
+
+        }
+        else if (type == "sheep") {
+
+            Sheep* sheep = new Sheep(id, position);
+
+            int daysWithoutFood = entity["daysWithoutFood"];
+            sheep->setDaysWithoutFood(daysWithoutFood);
+
+            gameState.addSheep(sheep);
+
+        }
+        else if (type == "wolf") {
+
+            Wolf* wolf = new Wolf(id, position);
+
+            int daysWithoutFood = entity["daysWithoutFood"];
+            wolf->setDaysWithoutFood(daysWithoutFood);
+
+            gameState.addWolf(wolf);
+        }
+    }
+
+    // Run exactly one simulation day
+    SimulationEngine engine;
+    engine.tick(gameState);
+
+    // Convert updated state to JSON
+    json output = gameStateToJson(gameState);
+
+    // Send ONLY JSON to stdout
+    cout << output.dump() << endl;
 
     return 0;
 }

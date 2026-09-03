@@ -53,7 +53,6 @@ async function createGameSession(req, res) {
     }
 }
 
-
 // async function getGameSessionById(req, res) {
 //     try {
 //         const id = Number(req.params.id);
@@ -118,7 +117,6 @@ async function getGameSessionById(req, res) {
     }
 }
 
-
 async function getGameSessionsByUserId(req, res) {
     try {
         const userId = Number(req.query.userId);
@@ -144,7 +142,6 @@ async function getGameSessionsByUserId(req, res) {
         });
     }
 }
-
 
 async function updateGameSession(req, res) {
     try {
@@ -214,10 +211,42 @@ async function updateGameSession(req, res) {
         }
 }
 
+async function startGameSession(req, res) {
+    try {
+        const id = Number(req.params.id);
 
+        if (!Number.isInteger(id) || id <= 0) {
+            return res.status(400).json({
+                message: "Invalid game session id"
+            });
+        }
+
+        const gameSession =
+            await gameSessionService.startGameSession(id);
+
+        if (!gameSession) {
+            return res.status(404).json({
+                message: "Game session not found"
+            });
+        }
+
+        return res.status(200).json({
+            message: "Game session started",
+            gameSession
+        });
+
+    } catch (error) {
+        console.error("Start game session error:", error);
+
+        return res.status(500).json({
+            message: "Could not start game session"
+        });
+    }
+}
 module.exports = {
     createGameSession,
     getGameSessionById,
     getGameSessionsByUserId,
-    updateGameSession
+    updateGameSession,
+    startGameSession
 };

@@ -2,10 +2,10 @@
 
 GameState::GameState(int rows, int columns)
     : board(rows, columns),
-      currentDay(0),
-      nextSheepId(1),
-      maxDays(0),
-      status(GameStatus::RUNNING) {
+    currentDay(0),
+    nextSheepId(1),
+    maxDays(0),
+    status(GameStatus::RUNNING) {
 }
 
 Board& GameState::getBoard() {
@@ -42,6 +42,10 @@ int GameState::getCurrentDay() const {
 
 void GameState::nextDay() {
     currentDay++;
+}
+
+void GameState::setCurrentDay(int day) {
+    currentDay = day;
 }
 
 void GameState::addGrass(Grass* newGrass) {

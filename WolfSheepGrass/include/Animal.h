@@ -18,7 +18,7 @@ public:
 
     bool wasFedToday() const;
     void resetFedToday();
-
+    void setDaysWithoutFood(int days);
     bool shouldDie() const;
 };
 

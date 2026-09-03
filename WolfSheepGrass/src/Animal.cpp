@@ -10,6 +10,10 @@ int Animal::getDaysWithoutFood() const {
     return daysWithoutFood;
 }
 
+void Animal::setDaysWithoutFood(int days) {
+    daysWithoutFood = days;
+}
+
 void Animal::increaseHunger() {
     daysWithoutFood++;
 }

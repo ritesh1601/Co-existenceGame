@@ -107,7 +107,6 @@ async function getGameSessionsByUserId(userId) {
     return result.rows;
 }
 
-
 async function updateGameSession(id, {
     currentDay,
     status,
@@ -140,9 +139,40 @@ async function updateGameSession(id, {
 
     return result.rows[0];
 }
+
+async function startGameSession(id) {
+    const result = await pool.query(
+        `
+        UPDATE game_sessions
+        SET
+            status = 'in_progress',
+            current_day = 0,
+            started_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = $1
+        RETURNING
+            id,
+            user_id,
+            status,
+            board_rows,
+            board_columns,
+            current_day,
+            max_days,
+            started_at,
+            completed_at,
+            created_at,
+            updated_at
+        `,
+        [id]
+    );
+
+    return result.rows[0];
+}
+
 module.exports = {
     createGameSession,
     getGameSessionById,
     getGameSessionsByUserId,
-    updateGameSession
+    updateGameSession,
+    startGameSession
 };

@@ -41,8 +41,9 @@ public:
     const std::vector<Wolf*>& getWolves() const;
 
     int getCurrentDay() const;
-
+    void setCurrentDay(int day);
     void nextDay();
+    
     int getNextSheepId();
     void addGrass(Grass* grass);
     void addSheep(Sheep* sheep);
