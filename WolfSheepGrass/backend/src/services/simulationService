@@ -1,0 +1,68 @@
+const gameSessionService = require("./gameSessionService");
+const gameEntityService = require("./gameEntityService");
+const cppSimulationService = require("./cppSimulationService");
+const pool = require("../db/database");
+
+async function simulateDay(gameSessionId) {
+
+    const gameSession =
+        await gameSessionService.getGameSessionById(gameSessionId);
+
+    if (!gameSession) {
+        throw new Error("GAME_SESSION_NOT_FOUND");
+    }
+
+    if (gameSession.status !== "in_progress") {
+        throw new Error("GAME_NOT_IN_PROGRESS");
+    }
+
+    const entities =
+        await gameEntityService.getGameEntities(gameSessionId);
+
+    const gameState = {
+        boardRows: Number(gameSession.board_rows),
+        boardColumns: Number(gameSession.board_columns),
+        currentDay: Number(gameSession.current_day),
+        maxDays: Number(gameSession.max_days),
+
+        entities: entities.map(entity => ({
+            id: Number(entity.id),
+            type: entity.entity_type,
+            row: Number(entity.row_position),
+            column: Number(entity.column_position),
+            daysWithoutFood: Number(entity.days_without_food)
+        }))
+    };
+
+    const result =
+        await cppSimulationService.runSimulation(gameState);
+
+    await pool.withTransaction(async (client) => {
+
+        await gameEntityService.saveSimulationResult(
+            client,
+            gameSessionId,
+            result.entities
+        );
+
+        await client.query(
+            `
+            UPDATE game_sessions
+            SET
+                current_day = $1,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $2
+            `,
+            [
+                result.currentDay,
+                gameSessionId
+            ]
+        );
+    });
+
+    return result;
+}
+
+module.exports = {
+    simulateDay
+};

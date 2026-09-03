@@ -40,19 +40,20 @@ async function createGameEntity({
     const result = await pool.query(
         `
         INSERT INTO game_entities (
-            game_session_id,
-            entity_type,
-            row_position,
+            game_session_id, 
+            entity_type, 
+            row_position, 
             column_position
         )
         VALUES ($1, $2, $3, $4)
-        RETURNING
-            id,
-            game_session_id,
-            entity_type,
-            row_position,
+        RETURNING 
+            id, 
+            game_session_id, 
+            entity_type, 
+            row_position, 
             column_position,
-            created_at,
+            days_without_food,
+            created_at, 
             updated_at
         `,
         [gameSessionId, entityType, row, column]
@@ -70,6 +71,7 @@ async function getGameEntities(gameSessionId) {
             entity_type,
             row_position,
             column_position,
+            days_without_food,
             created_at,
             updated_at
         FROM game_entities
@@ -82,7 +84,42 @@ async function getGameEntities(gameSessionId) {
     return result.rows;
 }
 
+async function saveSimulationResult(client, gameSessionId, entities) {
+
+    await client.query(
+        `
+        DELETE FROM game_entities
+        WHERE game_session_id = $1
+        `,
+        [gameSessionId]
+    );
+
+    for (const entity of entities) {
+
+        await client.query(
+            `
+            INSERT INTO game_entities (
+                game_session_id,
+                entity_type,
+                row_position,
+                column_position,
+                days_without_food
+            )
+            VALUES ($1, $2, $3, $4, $5)
+            `,
+            [
+                gameSessionId,
+                entity.type,
+                entity.row,
+                entity.column,
+                entity.daysWithoutFood || 0
+            ]
+        );
+    }
+}
+
 module.exports = {
     createGameEntity,
-    getGameEntities
+    getGameEntities,
+    saveSimulationResult
 };
