@@ -50,11 +50,18 @@ async function simulateDay(gameSessionId) {
             UPDATE game_sessions
             SET
                 current_day = $1,
+                status = $2::VARCHAR,
+                completed_at = CASE
+                    WHEN $2::VARCHAR IN ('won', 'lost')
+                    THEN CURRENT_TIMESTAMP
+                    ELSE NULL
+                END,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE id = $2
+            WHERE id = $3
             `,
             [
                 result.currentDay,
+                result.status,
                 gameSessionId
             ]
         );

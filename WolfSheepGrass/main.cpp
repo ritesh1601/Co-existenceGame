@@ -45,6 +45,20 @@ void printBoard(const GameState& gameState) {
     cout << "\n";
 }
 
+string gameStatusToString(GameStatus status) {
+
+    if (status == GameStatus::RUNNING)
+        return "in_progress";
+
+    if (status == GameStatus::WON)
+        return "won";
+
+    if (status == GameStatus::LOST)
+        return "lost";
+
+    return "in_progress";
+}
+
 json gameStateToJson(const GameState& gameState) {
 
     json data;
@@ -55,7 +69,8 @@ json gameStateToJson(const GameState& gameState) {
     data["boardColumns"] = board.getColumns();
     data["currentDay"] = gameState.getCurrentDay();
     data["maxDays"] = gameState.getMaxDays();
-
+    data["status"] = gameStatusToString(gameState.getStatus());
+    
     data["entities"] = json::array();
 
     // Grass
