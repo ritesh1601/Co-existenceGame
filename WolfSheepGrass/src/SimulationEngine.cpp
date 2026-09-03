@@ -23,9 +23,7 @@ std::mt19937& getRandomGenerator() {
 SimulationEngine::SimulationEngine() {
 }
 
-Position SimulationEngine::chooseRandomMove(
-    const std::vector<Position>& possibleMoves
-) {
+Position SimulationEngine::chooseRandomMove( const std::vector<Position>& possibleMoves){
     if (possibleMoves.empty()) {
         return Position(-1, -1);
     }
@@ -41,20 +39,15 @@ Position SimulationEngine::chooseRandomMove(
 }
 
 void SimulationEngine::tick(GameState& gameState) {
-
     moveAnimals(gameState);
-
     resolveInteractions(gameState);
-
     reproduceSheep(gameState);
-
     updateSurvival(gameState);
-
     removeDeadAnimals(gameState);
 
-    checkGameStatus(gameState);
-
     gameState.nextDay();
+
+    checkGameStatus(gameState);
 }
 
 void SimulationEngine::moveAnimals(GameState& gameState) {
@@ -377,9 +370,7 @@ void SimulationEngine::reproduceSheep(GameState& gameState) {
     }
 }
 
-void SimulationEngine::updateSurvival(
-    GameState& gameState
-) {
+void SimulationEngine::updateSurvival(GameState& gameState) {
 
     // --------------------------------
     // Sheep
@@ -432,9 +423,7 @@ void SimulationEngine::updateSurvival(
     }
 }
 
-void SimulationEngine::removeDeadAnimals(
-    GameState& gameState
-) {
+void SimulationEngine::removeDeadAnimals( GameState& gameState) {
 
     Board& board =
         gameState.getBoard();
@@ -518,9 +507,7 @@ void SimulationEngine::removeDeadAnimals(
     }
 }
 
-void SimulationEngine::checkGameStatus(
-    GameState& gameState
-) {
+void SimulationEngine::checkGameStatus(GameState& gameState) {
 
     bool hasSheep = false;
     bool hasWolf = false;

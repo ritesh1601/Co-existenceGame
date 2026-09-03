@@ -1,0 +1,42 @@
+{
+    "boardRows": 5,
+    "boardColumns": 5,
+    "currentDay": 0,
+    "maxDays": 10,
+
+    "entities": [
+        {
+            "id": 1,
+            "type": "grass",
+            "row": 0,
+            "column": 0
+        },
+        {
+            "id": 2,
+            "type": "grass",
+            "row": 2,
+            "column": 2
+        },
+        {
+            "id": 1,
+            "type": "sheep",
+            "row": 1,
+            "column": 1,
+            "daysWithoutFood": 0
+        },
+        {
+            "id": 2,
+            "type": "sheep",
+            "row": 3,
+            "column": 3,
+            "daysWithoutFood": 1
+        },
+        {
+            "id": 1,
+            "type": "wolf",
+            "row": 0,
+            "column": 4,
+            "daysWithoutFood": 0
+        }
+    ]
+}
