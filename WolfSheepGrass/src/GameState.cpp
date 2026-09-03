@@ -11,6 +11,7 @@ GameState::GameState(int rows, int columns)
 Board& GameState::getBoard() {
     return board;
 }
+
 const Board& GameState::getBoard() const {
     return board;
 }
@@ -18,6 +19,7 @@ const Board& GameState::getBoard() const {
 std::vector<Grass*>& GameState::getGrass() {
     return grass;
 }
+
 const std::vector<Grass*>& GameState::getGrass() const {
     return grass;
 }
@@ -25,6 +27,7 @@ const std::vector<Grass*>& GameState::getGrass() const {
 std::vector<Sheep*>& GameState::getSheep() {
     return sheep;
 }
+
 const std::vector<Sheep*>& GameState::getSheep() const {
     return sheep;
 }
@@ -32,6 +35,7 @@ const std::vector<Sheep*>& GameState::getSheep() const {
 std::vector<Wolf*>& GameState::getWolves() {
     return wolves;
 }
+
 const std::vector<Wolf*>& GameState::getWolves() const {
     return wolves;
 }
@@ -84,6 +88,10 @@ void GameState::addSheep(Sheep* newSheep) {
 
     sheep.push_back(newSheep);
     cell.setSheep(newSheep);
+
+    if (newSheep->getId() >= nextSheepId) {
+        nextSheepId = newSheep->getId() + 1;
+    }
 }
 
 void GameState::addWolf(Wolf* newWolf) {
@@ -105,7 +113,6 @@ void GameState::addWolf(Wolf* newWolf) {
     cell.setWolf(newWolf);
 }
 
-
 int GameState::getMaxDays() const {
     return maxDays;
 }
@@ -117,6 +124,7 @@ void GameState::setMaxDays(int maxDays) {
 GameStatus GameState::getStatus() const {
     return status;
 }
+
 int GameState::getNextSheepId() {
     return nextSheepId++;
 }

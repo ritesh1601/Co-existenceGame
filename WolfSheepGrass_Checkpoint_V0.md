@@ -487,3 +487,76 @@ Next:
 
 
 To compile : g++ main.cpp src\*.cpp -I include -o WolfSheepGrass.exe
+
+
+
+# Wolf-Sheep-Grass Coexistence
+## V0 Checkpoint
+
+### Project Description
+
+A gamified Wolf-Sheep-Grass ecosystem simulation built with C++, React, Node.js, Express & PostgreSQL.
+
+---
+
+## Completed Before This Checkpoint
+
+### 1. C++ Simulation Engine
+
+Implemented the core simulation using C++.
+
+Main classes include:
+
+- Position
+- Entity
+- Animal
+- Grass
+- Sheep
+- Wolf
+- Cell
+- Board
+- GameState
+- MovementStrategy
+- SheepMovementStrategy
+- WolfMovementStrategy
+- PathFinder
+- SimulationEngine
+
+The simulation supports:
+
+- Wolf movement toward sheep
+- Sheep movement toward grass
+- Animal hunger tracking
+- Wolf eating sheep
+- Sheep eating grass
+- Sheep reproduction
+- Dead animal removal
+- Day progression
+- Win/loss game status logic
+
+---
+
+## 2. C++ JSON Interface
+
+Added `nlohmann/json` to allow communication between Node.js and C++.
+
+C++ now accepts game state through `stdin` and returns the updated game state through `stdout`.
+
+Flow:
+
+Node.js
+↓
+JSON through stdin
+↓
+C++ executable
+↓
+SimulationEngine
+↓
+JSON through stdout
+↓
+Node.js
+
+Example command:
+
+```powershell
+Get-Content simulation_input.json -Raw | .\WolfSheepGrass.exe
