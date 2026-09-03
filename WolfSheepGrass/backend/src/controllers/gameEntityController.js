@@ -3,12 +3,19 @@ const gameEntityService = require("../services/gameEntityService");
 async function createGameEntity(req, res) {
     try {
         const gameSessionId = Number(req.params.id);
+        const userId = Number(req.user.id);
 
         const {
             entityType,
             row,
             column
         } = req.body;
+
+        if (!Number.isInteger(userId) || userId <= 0) {
+            return res.status(400).json({
+                message: "Invalid game session id"
+            });
+        }
 
         if (!Number.isInteger(gameSessionId) || gameSessionId <= 0) {
             return res.status(400).json({
@@ -37,6 +44,7 @@ async function createGameEntity(req, res) {
 
         const entity = await gameEntityService.createGameEntity({
             gameSessionId,
+            userId,
             entityType,
             row,
             column
@@ -77,6 +85,13 @@ async function createGameEntity(req, res) {
 async function getGameEntities(req, res) {
     try {
         const gameSessionId = Number(req.params.id);
+        const userId=Number(req.user.id);
+
+        if (!Number.isInteger(userId) || userId <= 0) {
+            return res.status(400).json({
+                message: "Invalid user id"
+            });
+        }
 
         if (!Number.isInteger(gameSessionId) || gameSessionId <= 0) {
             return res.status(400).json({
@@ -84,8 +99,9 @@ async function getGameEntities(req, res) {
             });
         }
 
+
         const entities =
-            await gameEntityService.getGameEntities(gameSessionId);
+            await gameEntityService.getGameEntities(gameSessionId,userId);
 
         return res.status(200).json({
             entities
