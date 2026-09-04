@@ -1,262 +1,327 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
+
 import "./Game.css";
 
+import {
+    setGameSession,
+    setEntities,
+    setSelectedEntity,
+    placeEntity,
+    setLoading,
+    setError
+} from "../store/gameSlice";
+
+import {
+    fetchGameSession,
+    fetchGameEntities,
+    saveGameSetup,
+    simulateDay
+} from "../services/gameApi";
+
 function Game() {
+
     const { id } = useParams();
 
-    const [gameSession, setGameSession] = useState(null);
-    const [entities, setEntities] = useState([]);
-    const [selectedEntity, setSelectedEntity] = useState(null);
+    const dispatch = useDispatch();
+
+    const {
+        session,
+        entities,
+        selectedEntity,
+        loading,
+        initialEntityCounts,
+        error
+    } = useSelector((state) => state.game);
 
     useEffect(() => {
-        async function fetchGameSession() {
+
+        async function loadGame() {
+
             try {
-                const token = localStorage.getItem("token");
 
-                const result = await fetch(
-                    `http://localhost:5000/api/game-sessions/${id}`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    }
-                );
+                dispatch(setLoading(true));
+                dispatch(setError(null));
 
-                const data = await result.json();
+                const gameSession =
+                    await fetchGameSession(id);
 
-                if (!result.ok) {
-                    throw new Error(data.message);
-                }
+                const gameEntities =
+                    await fetchGameEntities(id);
 
-                setGameSession(data.gameSession);
+                dispatch(setGameSession(gameSession));
+                dispatch(setEntities(gameEntities));
 
             } catch (error) {
-                console.error("Failed to fetch game session:", error);
-            }
-        }
 
-        fetchGameSession();
-    }, [id]);
-
-    useEffect(() => {
-        async function fetchEntities() {
-            try {
-                const token = localStorage.getItem("token");
-
-                const result = await fetch(
-                    `http://localhost:5000/api/game-sessions/${id}/entities`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`
-                        }
-                    }
+                console.error(
+                    "Failed to load game:",
+                    error
                 );
 
-                const data = await result.json();
+                dispatch(
+                    setError(error.message)
+                );
 
-                if (!result.ok) {
-                    throw new Error(data.message);
-                }
+            } finally {
 
-                setEntities(data.entities);
-
-            } catch (error) {
-                console.error("Failed to fetch entities:", error);
+                dispatch(setLoading(false));
             }
         }
 
-        fetchEntities();
-    }, [id]);
+        loadGame();
 
-    function canPlaceEntity(row, column, entityType) {
-        const entitiesAtPosition = entities.filter(
-            (entity) =>
-                Number(entity.row_position) === row &&
-                Number(entity.column_position) === column
-        );
+    }, [id, dispatch]);
 
-        // Empty cell
-        if (entitiesAtPosition.length === 0) {
-            return true;
-        }
 
-        // A cell can contain at most 2 entities
-        if (entitiesAtPosition.length >= 2) {
-            return false;
-        }
+    async function handleSaveSetup() {
 
-        const existingType = entitiesAtPosition[0].entity_type;
-
-        // Same entity cannot be placed twice
-        if (existingType === entityType) {
-            return false;
-        }
-
-        // Grass + Sheep is allowed
-        if (
-            (existingType === "grass" && entityType === "sheep") ||
-            (existingType === "sheep" && entityType === "grass")
-        ) {
-            return true;
-        }
-
-        // Grass + Wolf is allowed
-        if (
-            (existingType === "grass" && entityType === "wolf") ||
-            (existingType === "wolf" && entityType === "grass")
-        ) {
-            return true;
-        }
-
-        // Sheep + Wolf is NOT allowed during placement
-        if (
-            (existingType === "sheep" && entityType === "wolf") ||
-            (existingType === "wolf" && entityType === "sheep")
-        ) {
-            return false;
-        }
-
-        return false;
-    }
-
-    function placeEntity(row, column) {
-        if (!selectedEntity) {
-            return;
-        }
-
-        if (!canPlaceEntity(row, column, selectedEntity)) {
-            console.log("Entity placement not allowed");
-            return;
-        }
-
-        setEntities((previousEntities) => [
-            ...previousEntities,
-            {
-                entity_type: selectedEntity,
-                row_position: row,
-                column_position: column,
-                days_without_food: 0
-            }
-        ]);
-    }
-
-    async function saveGameSetup() {
         try {
-            const token = localStorage.getItem("token");
 
-            const result = await fetch(
-                `http://localhost:5000/api/game-sessions/${id}/setup`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        entities: entities.map((entity) => ({
-                            entityType: entity.entity_type,
-                            row: Number(entity.row_position),
-                            column: Number(entity.column_position)
-                        }))
-                    })
-                }
+            dispatch(setLoading(true));
+            dispatch(setError(null));
+
+            await saveGameSetup(
+                id,
+                entities
             );
 
-            const data = await result.json();
-
-            if (!result.ok) {
-                throw new Error(data.message);
-            }
-
-            console.log("Game setup saved:", data);
-
-            // Replace temporary frontend entities
-            // with entities returned by the backend.
-            setEntities(data.entities);
+            console.log(
+                "Game setup saved successfully"
+            );
 
         } catch (error) {
-            console.error("Failed to save game setup:", error);
+
+            console.error(
+                "Failed to save game setup:",
+                error
+            );
+
+            dispatch(
+                setError(error.message)
+            );
+
+        } finally {
+
+            dispatch(setLoading(false));
         }
     }
 
-    if (!gameSession) {
+
+    async function handleSimulateDay() {
+
+        try {
+
+            dispatch(setLoading(true));
+            dispatch(setError(null));
+
+            const gameState =
+                await simulateDay(id);
+
+            dispatch(
+                setGameSession({
+                    ...session,
+                    currentDay: gameState.currentDay,
+                    maxDays: gameState.maxDays,
+                    status: gameState.status,
+                    boardRows: gameState.boardRows,
+                    boardColumns: gameState.boardColumns
+                })
+            );
+
+            dispatch(
+                setEntities(gameState.entities)
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Failed to simulate day:",
+                error
+            );
+
+            dispatch(
+                setError(error.message)
+            );
+
+        } finally {
+
+            dispatch(setLoading(false));
+        }
+    }
+
+
+    function handleCellClick(row, column) {
+
+        dispatch(
+            placeEntity({
+                row,
+                column
+            })
+        );
+    }
+
+
+    if (loading && !session) {
         return <h2>Loading game...</h2>;
     }
 
-    const rows = Number(gameSession.board_rows);
-    const columns = Number(gameSession.board_columns);
+    if (!session) {
+        return <h2>Game session not found</h2>;
+    }
+
+    const rows = session.boardRows;
+    const columns = session.boardColumns;
+    console.log(session);
+    console.log(rows);
+    console.log(columns);
 
     return (
-        <div>
-            <h1>Game #{gameSession.id}</h1>
+        <div className="game-container">
+
+            <h1>
+                Game #{session.id}
+            </h1>
 
             <p>
-                Day {gameSession.current_day} / {gameSession.max_days}
+                Day {session.currentDay} / {session.maxDays}
             </p>
 
             <p>
-                Status: {gameSession.status}
+                Status: {session.status}
             </p>
 
-            <div>
+            {error && (
+                <p className="game-error">
+                    {error}
+                </p>
+            )}
+
+            <div className="entity-picker">
+
                 <button
-                    onClick={() => setSelectedEntity("grass")}
+                    onClick={() =>
+                        dispatch(
+                            setSelectedEntity("grass")
+                        )
+                    }
                 >
-                    🌱 Grass
+                🌱 Grass{" "}
+                {initialEntityCounts.grass}
+                /
+                {session.maxInitialGrass}
                 </button>
 
                 <button
-                    onClick={() => setSelectedEntity("sheep")}
+                    onClick={() =>
+                        dispatch(
+                            setSelectedEntity("sheep")
+                        )
+                    }
                 >
-                    🐑 Sheep
+                    🐑 Sheep{" "}
+                    {initialEntityCounts.sheep}
+                    /
+                    {session.maxInitialSheep}
                 </button>
 
                 <button
-                    onClick={() => setSelectedEntity("wolf")}
+                    onClick={() =>
+                        dispatch(
+                            setSelectedEntity("wolf")
+                        )
+                    }
                 >
-                    🐺 Wolf
+                    🐺 Wolf{" "}
+                    {initialEntityCounts.wolf}
+                    /
+                    {session.maxInitialWolves}
                 </button>
+
             </div>
 
             <p>
-                Selected: {selectedEntity || "None"}
+                Selected:{" "}
+                {selectedEntity || "None"}
             </p>
 
-            <div className="game-board">
-                {Array.from({ length: rows }, (_, row) =>
-                    Array.from({ length: columns }, (_, column) => {
+            <div
+                className="game-board"
+                style={{
+                    gridTemplateColumns: `repeat(${columns}, 70px)`,
+                    gridTemplateRows: `repeat(${rows}, 70px)`
+                }}
+            >
 
-                        const entitiesAtPosition = entities.filter(
-                            (entity) =>
-                                Number(entity.row_position) === row &&
-                                Number(entity.column_position) === column
-                        );
+                {Array.from(
+                    { length: rows },
+                    (_, row) =>
+                        Array.from(
+                            { length: columns },
+                            (_, column) => {
 
-                        return (
-                            <div
-                                className="game-cell"
-                                key={`${row}-${column}`}
-                                onClick={() => placeEntity(row, column)}
-                            >
-                                {entitiesAtPosition.map((entity, index) => (
-                                    <span key={index}>
-                                        {entity.entity_type === "grass"
-                                            ? "🌱"
-                                            : entity.entity_type === "sheep"
-                                            ? "🐑"
-                                            : "🐺"}
-                                    </span>
-                                ))}
-                            </div>
-                        );
-                    })
+                                const cellEntities =
+                                    entities.filter(
+                                        (entity) =>
+                                            entity.row === row &&
+                                            entity.column === column
+                                    );
+
+                                return (
+                                    <div
+                                        className="game-cell"
+                                        key={`${row}-${column}`}
+                                        onClick={() =>
+                                            handleCellClick(
+                                                row,
+                                                column
+                                            )
+                                        }
+                                    >
+
+                                        {cellEntities.map(
+                                            (entity) => (
+                                                <span
+                                                    key={entity.id}
+                                                >
+                                                    {
+                                                        entity.type === "grass"
+                                                            ? "🌱"
+                                                            : entity.type === "sheep"
+                                                            ? "🐑"
+                                                            : "🐺"
+                                                    }
+                                                </span>
+                                            )
+                                        )}
+
+                                    </div>
+                                );
+                            }
+                        )
                 )}
+
             </div>
 
-            <button onClick={saveGameSetup}>
-                Save Setup
-            </button>
+            <div className="game-actions">
+
+                <button
+                    onClick={handleSaveSetup}
+                    disabled={loading}
+                >
+                    Save Setup
+                </button>
+
+                <button
+                    onClick={handleSimulateDay}
+                    disabled={loading}
+                >
+                    Simulate Day
+                </button>
+
+            </div>
+
         </div>
     );
 }

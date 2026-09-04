@@ -10,8 +10,8 @@ router.get("/:id", authenticateToken,gameSessionController.getGameSessionById);
 router.get("/", authenticateToken,gameSessionController.getGameSessionsByUserId);
 router.patch("/:id", authenticateToken,gameSessionController.updateGameSession);
 router.post("/:id/start", authenticateToken,gameSessionController.startGameSession);
-router.post("/:id/tick", authenticateToken,simulationController.simulateDay);
 router.post("/:id/setup",authenticateToken,gameSessionController.saveGameSetup);
+router.post("/:id/tick", authenticateToken,simulationController.simulateDay);
 
 
 module.exports = router;

@@ -2,19 +2,27 @@ const pool = require("../db/database");
 
 async function createGameSession({
     userId,
-    boardRows = 5,
-    boardColumns = 5,
-    maxDays = 10
+    boardRows,
+    boardColumns,
+    maxDays,
+    maxInitialSheep,
+    maxInitialWolves,
+    maxInitialGrass
 }) {
+
     const result = await pool.query(
         `
         INSERT INTO game_sessions (
             user_id,
             board_rows,
             board_columns,
-            max_days
+            max_days,
+            max_initial_sheep,
+            max_initial_wolves,
+            max_initial_grass
         )
-        VALUES ($1, $2, $3, $4)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+
         RETURNING
             id,
             user_id,
@@ -23,12 +31,25 @@ async function createGameSession({
             board_columns,
             current_day,
             max_days,
+
+            max_initial_sheep,
+            max_initial_wolves,
+            max_initial_grass,
+
             started_at,
             completed_at,
             created_at,
             updated_at
         `,
-        [userId, boardRows, boardColumns, maxDays]
+        [
+            userId,
+            boardRows,
+            boardColumns,
+            maxDays,
+            maxInitialSheep,
+            maxInitialWolves,
+            maxInitialGrass
+        ]
     );
 
     return result.rows[0];
@@ -48,7 +69,10 @@ async function getGameSessionById(id,userId) {
             started_at,
             completed_at,
             created_at,
-            updated_at
+            updated_at,
+            max_initial_sheep,
+            max_initial_wolves,
+            max_initial_grass
         FROM game_sessions
         WHERE id = $1 AND user_id = $2
         `,

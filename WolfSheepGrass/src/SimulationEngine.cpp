@@ -278,8 +278,7 @@ void SimulationEngine::resolveInteractions(GameState& gameState) {
 
 void SimulationEngine::reproduceSheep(GameState& gameState) {
 
-    Board& board =
-        gameState.getBoard();
+    Board& board = gameState.getBoard();
 
     // Snapshot so newborn sheep
     // don't reproduce on the same day
@@ -323,6 +322,7 @@ void SimulationEngine::reproduceSheep(GameState& gameState) {
                 int newCol =
                     position.col + dc;
 
+                // Outside the board
                 if (!board.isValidPosition(
                         newRow,
                         newCol)) {
@@ -336,19 +336,33 @@ void SimulationEngine::reproduceSheep(GameState& gameState) {
                         newCol
                     );
 
-                // Only one sheep per cell
-                if (!newCell.hasSheep()) {
+                /*
+                    Newborn sheep can only be placed
+                    in a cell that:
 
-                    possiblePositions.push_back(
-                        Position(
-                            newRow,
-                            newCol
-                        )
-                    );
-                }
+                    1. Does not already contain a sheep
+                    2. Does not contain a wolf
+
+                    Grass is allowed.
+                    Empty cell is allowed.
+                */
+
+                if (newCell.hasSheep())
+                    continue;
+
+                if (newCell.hasWolf())
+                    continue;
+
+                possiblePositions.push_back(
+                    Position(
+                        newRow,
+                        newCol
+                    )
+                );
             }
         }
 
+        // No valid position -> do not reproduce
         if (possiblePositions.empty())
             continue;
 

@@ -19,3 +19,21 @@
 
     background-color: #e8f5e9;
 }
+
+.entity-picker {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 10px 0;
+}
+
+.entity-picker button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.entity-picker button span {
+    font-size: 13px;
+    opacity: 0.9;
+}
