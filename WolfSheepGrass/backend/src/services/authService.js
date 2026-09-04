@@ -45,6 +45,27 @@ async function authenticateWithGoogle(credential) {
     };
 }
 
+async function getCurrentUser(userId) {
+    const result = await pool.query(
+        `
+        SELECT
+            id,
+            google_id,
+            email,
+            username,
+            profile_picture,
+            created_at,
+            updated_at
+        FROM users
+        WHERE id = $1
+        `,
+        [userId]
+    );
+
+    return result.rows[0] || null;
+}
+
 module.exports = {
-    authenticateWithGoogle
+    authenticateWithGoogle,
+    getCurrentUser
 };

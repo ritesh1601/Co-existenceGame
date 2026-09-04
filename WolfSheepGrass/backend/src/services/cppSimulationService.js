@@ -51,7 +51,6 @@ function runSimulation(gameState) {
     });
 }
 
-
 module.exports = {
     runSimulation
 };
